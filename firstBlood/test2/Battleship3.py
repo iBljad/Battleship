@@ -12,7 +12,6 @@ fleet_dict = {1: 4,
 
 player_fleet_dict_for_ai = fleet_dict
 
-lehgth = len(BattleBoard.board)
 
 class Board(object):
     def __init__(self, length):
@@ -33,6 +32,10 @@ class Board(object):
         print('\n')
 
 
+battleBoard = Board(10)
+board_length = len(battleBoard.board)
+
+
 # Checking if point is allowed to place ship
 def point_ok(board, xx, yy):
     ok = False
@@ -51,7 +54,6 @@ def point_ok(board, xx, yy):
 def place_ship(board, size, number, player_fleet_in):
     # checking horizontal placing availability
     def point_hor_ok(check_board, check_x, check_y, check_size):
-        ok = False
         cnt = 0
         for check_xx in range(check_x, min(len(check_board.board), check_x + check_size)):
             if check_board.board[check_y][check_xx] != "~ ":
@@ -68,7 +70,6 @@ def place_ship(board, size, number, player_fleet_in):
 
     # checking vertical placing availability
     def point_vert_ok(check_board, check_x, check_y, check_size):
-        ok = False
         cnt = 0
         for check_yy in range(check_y, min(len(check_board.board), check_y + check_size)):
             if check_board.board[check_yy][check_x] != "~ ":
@@ -93,16 +94,16 @@ def place_ship(board, size, number, player_fleet_in):
                 init_board.board[xx][yy] = 'X'
 
     # building placing variants map
-    for x in range(len(init_board.board)):
-        for y in range(len(init_board.board)):
-            if point_vert_ok(init_board, y, x, size) and point_hor_ok(init_board, y, x, size):
-                result_board.board[x][y] = 'd'
-            elif point_vert_ok(init_board, y, x, size):
-                result_board.board[x][y] = 'v'
-            elif point_hor_ok(init_board, y, x, size):
-                result_board.board[x][y] = 'h'
+    for xx in range(len(init_board.board)):
+        for yy in range(len(init_board.board)):
+            if point_vert_ok(init_board, yy, xx, size) and point_hor_ok(init_board, yy, xx, size):
+                result_board.board[xx][yy] = 'd'
+            elif point_vert_ok(init_board, yy, xx, size):
+                result_board.board[xx][yy] = 'v'
+            elif point_hor_ok(init_board, yy, xx, size):
+                result_board.board[xx][yy] = 'h'
             else:
-                result_board.board[x][y] = 'X'
+                result_board.board[xx][yy] = 'xx'
 
     # check if there free cell in board
     for xx in range(len(board.board)):
@@ -155,7 +156,6 @@ def board_init(board, fleet_dict_in, player_fleet_in):
     quit_init_flag = False
     try_cnt = 0
     while not quit_init_flag:
-        success = False
         battleBoard.__init__(10)
         for size in fleet_dict_in:
             for count in range(0, fleet_dict_in[size]):
@@ -203,7 +203,6 @@ def sunk_ship(fleet_name, ship_name, board_name):
         player_fleet_dict_for_ai[int(str(ship_name)[0])] -= 1
 
 
-battleBoard = Board(10)
 ai_board = Board(10)
 player_board = Board(10)
 
@@ -235,27 +234,27 @@ def game_invitation():
             print('I don\'t understand you, let\'s try again:')
 
 
-def check_shot(x, y):
+def check_shot(xx, yy):
     if is_players_turn:
-        if ai_board.board[x][y] not in str(ai_fleet.keys().__str__()):
-            if ai_board.board[x][y] in ['* ', 'm ', 'X ']:
+        if ai_board.board[xx][yy] not in str(ai_fleet.keys().__str__()):
+            if ai_board.board[xx][yy] in ['* ', 'm ', 'xx ']:
                 print('Don\'t repeat')
             else:
-                ai_board.board[x][y] = 'm '
-                battleBoard.board[x][y] = 'm '
-                print('You missed')
+                ai_board.board[xx][yy] = 'm '
+                battleBoard.board[xx][yy] = 'm '
+                print('yyou missed')
         else:
-            ai_fleet[int(ai_board.board[x][y])]['size'] -= 1
-            if ai_fleet[int(ai_board.board[x][y])]['size'] == 0:
+            ai_fleet[int(ai_board.board[xx][yy])]['size'] -= 1
+            if ai_fleet[int(ai_board.board[xx][yy])]['size'] == 0:
                 ai_fleet['total'] -= 1
-                print('Oh no! You sank my ship!')
-                sunk_ship(ai_fleet, int(ai_board.board[x][y]), battleBoard)
-                ai_board.board[x][y] = 'X '
-                # battleBoard.board[x][y] = 'X '
+                print('Oh no! yyou sank myy ship!')
+                sunk_ship(ai_fleet, int(ai_board.board[xx][yy]), battleBoard)
+                ai_board.board[xx][yy] = 'xx '
+                # battleBoard.board[xx][yy] = 'xx '
             else:
-                print('You\'ve got me')
-                ai_board.board[x][y] = '* '
-                battleBoard.board[x][y] = '* '
+                print('yyou\'ve got me')
+                ai_board.board[xx][yy] = '* '
+                battleBoard.board[xx][yy] = '* '
 
 
 def get_shot_coordinates():
