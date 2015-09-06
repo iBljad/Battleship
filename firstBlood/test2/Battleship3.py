@@ -39,8 +39,8 @@ board_length = len(battleBoard.board)
 # Checking if point is allowed to place ship
 def point_ok(board, xx, yy):
     ok = False
-    for xxx in range(max(0, xx - 1), min(len(board.board), xx + 2)):
-        for yyy in range(max(0, yy - 1), min(len(board.board), yy + 2)):
+    for xxx in range(max(0, xx - 1), min(board_length, xx + 2)):
+        for yyy in range(max(0, yy - 1), min(board_length, yy + 2)):
             if board.board[xxx][yyy] != "~ ":
                 ok = False
                 break
@@ -55,7 +55,7 @@ def place_ship(board, size, number, player_fleet_in):
     # checking horizontal placing availability
     def point_hor_ok(check_board, check_x, check_y, check_size):
         cnt = 0
-        for check_xx in range(check_x, min(len(check_board.board), check_x + check_size)):
+        for check_xx in range(check_x, min(board_length, check_x + check_size)):
             if check_board.board[check_y][check_xx] != "~ ":
                 ok = False
                 break
@@ -71,7 +71,7 @@ def place_ship(board, size, number, player_fleet_in):
     # checking vertical placing availability
     def point_vert_ok(check_board, check_x, check_y, check_size):
         cnt = 0
-        for check_yy in range(check_y, min(len(check_board.board), check_y + check_size)):
+        for check_yy in range(check_y, min(board_length, check_y + check_size)):
             if check_board.board[check_yy][check_x] != "~ ":
                 ok = False
                 break
@@ -85,17 +85,17 @@ def place_ship(board, size, number, player_fleet_in):
         return ok
 
     result = False
-    result_board = Board(len(board.board))
-    init_board = Board(len(board.board))
-    for xx in range(len(board.board)):
-        for yy in range(len(board.board)):
+    result_board = Board(board_length)
+    init_board = Board(board_length)
+    for xx in range(board_length):
+        for yy in range(board_length):
             if not point_ok(board, xx, yy):
                 result_board.board[xx][yy] = 'X'
                 init_board.board[xx][yy] = 'X'
 
     # building placing variants map
-    for xx in range(len(init_board.board)):
-        for yy in range(len(init_board.board)):
+    for xx in range(board_length):
+        for yy in range(board_length):
             if point_vert_ok(init_board, yy, xx, size) and point_hor_ok(init_board, yy, xx, size):
                 result_board.board[xx][yy] = 'd'
             elif point_vert_ok(init_board, yy, xx, size):
@@ -106,8 +106,8 @@ def place_ship(board, size, number, player_fleet_in):
                 result_board.board[xx][yy] = 'xx'
 
     # check if there free cell in board
-    for xx in range(len(board.board)):
-        for yy in range(len(board.board)):
+    for xx in range(board_length):
+        for yy in range(board_length):
             if result_board.board[xx][yy] in 'dvh':
                 result = True
                 break
@@ -126,8 +126,8 @@ def place_ship(board, size, number, player_fleet_in):
     if result:
         in_progress = True
         while in_progress:
-            rand_x = randint(0, len(board.board) - 1)
-            rand_y = randint(0, len(board.board) - 1)
+            rand_x = randint(0, board_length - 1)
+            rand_y = randint(0, board_length - 1)
             if result_board.board[rand_x][rand_y] == 'v':
                 for xx in range(rand_x, rand_x + size):
                     board.board[xx][rand_y] = str(number)
@@ -183,14 +183,14 @@ def board_init(board, fleet_dict_in, player_fleet_in):
 # diagnostics
 def check_board_init(board, fleet_dict_input):
     board_check_cnt = 0
-    for xx in range(0, len(board.board)):
-        for yy in range(0, len(board.board)):
+    for xx in range(0, board_length):
+        for yy in range(0, board_length):
             if board.board[xx][yy] == "~ ":
                 board_check_cnt += 1
     fleet_sum = 0
     for key in fleet_dict_input:
         fleet_sum += (key * fleet_dict_input[key])
-    if board_check_cnt == len(board.board) ** 2 - fleet_sum:
+    if board_check_cnt == board_length ** 2 - fleet_sum:
         print('Init successful')
     else:
         print('Init failed')
@@ -261,9 +261,9 @@ def get_shot_coordinates():
     if is_players_turn:
         while True:
             try:
-                x = abs(len(battleBoard.board) - int(input('Type x: ')))
+                x = abs(board_length - int(input('Type x: ')))
                 y = int(input('Type y: '))-1
-                if (x not in range(0, len(battleBoard.board))) or (y not in range(0, len(battleBoard.board))):
+                if (x not in range(0, board_length)) or (y not in range(0, board_length)):
                     raise BaseException
                 break
             except ValueError:
