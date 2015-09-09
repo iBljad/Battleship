@@ -1,3 +1,4 @@
-print(1, end='')
-print(2)
+
+print('\033[95m' + '22222')
+print('\033[0m')
 print(3)

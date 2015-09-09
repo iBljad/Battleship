@@ -24,7 +24,7 @@ class Board(object):
         field_y = self.length
         field_x = ' 0 '
         for i in self.board:
-            print(str(field_y).rjust(2, ' '), ' '.join(i))
+            print(str(field_y).rjust(2, ' '),' '.join(i))
             field_y -= 1
         for xx in range(1, self.length+1):
             field_x += (str(xx).ljust(3, ' '))
