@@ -12,6 +12,11 @@ fleet_dict = {1: 4,
 player_fleet_dict_for_ai = fleet_dict
 
 
+def assign_color(xx, yy, board_in):
+    if not point_ok(board_in, xx, yy):
+        return '\033[94m'
+
+
 class Board(object):
     def __init__(self, length):
         self.length = length
@@ -22,9 +27,13 @@ class Board(object):
     def __repr__(self):
         field_y = self.length
         field_x = ' 0 '
-        for i in self.board:
-            print(str(field_y).rjust(2, ' '),  # print number of row (human y)
-                  ' '.join(i))  # content of board
+        for xx in range(len(self.board)):
+            print(str(field_y).rjust(2, ' '), end='')  # print number of row (human y)
+            for yy in range(self.board[xx]):
+                print(assign_color(xx, yy, self.board) + self.board[xx][yy])
+
+            print()
+                  # ' '.join(i))  # content of line
             field_y -= 1
 
         # print number of col (human x)
