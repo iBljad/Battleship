@@ -3,7 +3,6 @@ from random import randint, choice
 
 print(chr(27) + "[2J")
 
-
 fleet_dict = {1: 4,
               2: 3,
               3: 2,
@@ -11,6 +10,19 @@ fleet_dict = {1: 4,
               }
 
 player_fleet_dict_for_ai = fleet_dict
+
+
+def assign_color(xx, yy, board_in):
+    if board_in.board[xx][yy] == 'X ':
+        return '\033[31m'
+    elif not point_ok_color(board_in, xx, yy) or board_in.board[xx][yy] == 'm ':
+        return '\033[90m'
+    elif board_in.board[xx][yy] == '~ ':
+        return '\033[34m'
+    elif board_in.board[xx][yy] == '* ':
+        return '\033[37m'
+    else:
+        return '\033[0m'
 
 
 class Board(object):
@@ -23,12 +35,20 @@ class Board(object):
     def __repr__(self):
         field_y = self.length
         field_x = ' 0 '
-        for i in self.board:
-            print(str(field_y).rjust(2, ' '),' '.join(i))
+        for xx in range(len(self.board)):
+            print(str(field_y).rjust(2, ' '), end='')  # print number of row (human y)
+            for yy in range(len(self.board[xx])):
+                print(assign_color(xx, yy, self) + ' ' + self.board[xx][yy] + '\033[0m', end='')
+
+            print()
+            # ' '.join(i))  # content of line
             field_y -= 1
-        for xx in range(1, self.length+1):
+
+        # print number of col (human x)
+        for xx in range(1, self.length + 1):
             field_x += (str(xx).ljust(3, ' '))
         print(field_x)
+
         print('\n')
 
 
@@ -38,6 +58,21 @@ def point_ok(board, xx, yy):
     for xxx in range(max(0, xx - 1), min(len(board.board), xx + 2)):
         for yyy in range(max(0, yy - 1), min(len(board.board), yy + 2)):
             if board.board[xxx][yyy] != "~ ":
+                ok = False
+                break
+        else:
+            ok = True
+        if not ok:
+            break
+    return ok
+
+
+# check for coloring
+def point_ok_color(board, xx, yy):
+    ok = False
+    for xxx in range(max(0, xx - 1), min(len(board.board), xx + 2)):
+        for yyy in range(max(0, yy - 1), min(len(board.board), yy + 2)):
+            if board.board[xxx][yyy] == "X ":
                 ok = False
                 break
         else:
@@ -146,7 +181,7 @@ def place_ship(board, size, number, player_fleet_in):
                         board.board[rand_x][yy] = str(number)
                         dict_fill(player_fleet_in, rand_x, yy)
                 in_progress = False
-        # print('Placing result: {}, x:y [{}:{}], ship: {} \n'.format(result, rand_x, rand_y, number))
+                # print('Placing result: {}, x:y [{}:{}], ship: {} \n'.format(result, rand_x, rand_y, number))
     return result  # rand_x, rand_y, result_board.__repr__(), board.__repr__()
 
 
@@ -209,7 +244,6 @@ player_board = Board(10)
 ai_fleet = {'total': sum(fleet_dict.values())}
 player_fleet = {'total': sum(fleet_dict.values())}
 
-
 print(battleBoard.__repr__())
 # print(ai_fleet)
 
@@ -256,7 +290,7 @@ while not quit_flag:
             # check if input is correct
             while True:
                 try:
-                    x = int(input('Type x: '))-1
+                    x = int(input('Type x: ')) - 1
                     y = abs(len(battleBoard.board) - int(input('Type y: ')))
                     if (x not in range(0, len(battleBoard.board))) or (y not in range(0, len(battleBoard.board))):
                         raise BaseException
@@ -293,9 +327,3 @@ while not quit_flag:
                 break
         if player_win:
             break
-
-
-
-
-
-

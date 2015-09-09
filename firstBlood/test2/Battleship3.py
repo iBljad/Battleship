@@ -13,8 +13,16 @@ player_fleet_dict_for_ai = fleet_dict
 
 
 def assign_color(xx, yy, board_in):
-    if not point_ok(board_in, xx, yy):
-        return '\033[94m'
+    if board_in.board[xx][yy] == 'X ':
+        return '\033[31m'
+    elif not point_ok_color(board_in, xx, yy) or board_in.board[xx][yy] == 'm ':
+        return '\033[90m'
+    elif board_in.board[xx][yy] == '~ ':
+        return '\033[34m'
+    elif board_in.board[xx][yy] == '* ':
+        return '\033[37m'
+    else:
+        return '\033[0m'
 
 
 class Board(object):
@@ -29,11 +37,11 @@ class Board(object):
         field_x = ' 0 '
         for xx in range(len(self.board)):
             print(str(field_y).rjust(2, ' '), end='')  # print number of row (human y)
-            for yy in range(self.board[xx]):
-                print(assign_color(xx, yy, self.board) + self.board[xx][yy])
+            for yy in range(len(self.board[xx])):
+                print(assign_color(xx, yy, self) + ' ' + self.board[xx][yy] + '\033[0m', end='')
 
             print()
-                  # ' '.join(i))  # content of line
+            # ' '.join(i))  # content of line
             field_y -= 1
 
         # print number of col (human x)
@@ -46,6 +54,21 @@ class Board(object):
 
 battleBoard = Board(10)
 board_length = len(battleBoard.board)
+
+
+# check for coloring
+def point_ok_color(board, xx, yy):
+    ok = False
+    for xxx in range(max(0, xx - 1), min(len(board.board), xx + 2)):
+        for yyy in range(max(0, yy - 1), min(len(board.board), yy + 2)):
+            if board.board[xxx][yyy] == "X ":
+                ok = False
+                break
+        else:
+            ok = True
+        if not ok:
+            break
+    return ok
 
 
 # Checking if point is allowed to place ship
