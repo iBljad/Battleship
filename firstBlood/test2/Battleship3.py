@@ -225,13 +225,14 @@ def game_invitation():
         answer = 'Y'  # input('Would you like to play Battleship? (yes/no)\n').upper()
         if answer in negative_answer:
             print('Well, goodbye!')
-            quit_flag = True
+            inner_quit_flag = True
             break
         elif answer in positive_answer:
             print('Well, let\'s begin!')
             break
         else:
             print('I don\'t understand you, let\'s try again:')
+    return inner_quit_flag
 
 
 def check_shot(xx, yy):
@@ -242,17 +243,17 @@ def check_shot(xx, yy):
             else:
                 ai_board.board[xx][yy] = 'm '
                 battleBoard.board[xx][yy] = 'm '
-                print('yyou missed')
+                print('You missed')
         else:
             ai_fleet[int(ai_board.board[xx][yy])]['size'] -= 1
             if ai_fleet[int(ai_board.board[xx][yy])]['size'] == 0:
                 ai_fleet['total'] -= 1
-                print('Oh no! yyou sank myy ship!')
+                print('Oh no! you sank myy ship!')
                 sunk_ship(ai_fleet, int(ai_board.board[xx][yy]), battleBoard)
                 ai_board.board[xx][yy] = 'xx '
                 # battleBoard.board[xx][yy] = 'xx '
             else:
-                print('yyou\'ve got me')
+                print('You\'ve got me')
                 ai_board.board[xx][yy] = '* '
                 battleBoard.board[xx][yy] = '* '
 
@@ -271,17 +272,18 @@ def get_shot_coordinates():
             except BaseException:
                 print('Oops, that\'s not even in the ocean')
         # check hit/missed
+    else:
+        pass
+
 
 # game cycle
 while not quit_flag:
-    game_invitation()
-    if quit_flag:
+    if game_invitation():
         break
-    # game invitation
-    ai_board.__init__(10)
-    player_board.__init__(10)
 
     # init boards
+    ai_board.__init__(10)
+    player_board.__init__(10)
     board_init(ai_board, fleet_dict, ai_fleet)
     board_init(player_board, fleet_dict, player_fleet)
 
@@ -290,9 +292,9 @@ while not quit_flag:
     pprint(ai_fleet, width=95)
     print(battleBoard.__repr__())
     print(player_fleet)
-    player_win = False
+    round_quit_flag = False
 
-    while not player_win:
+    while not round_quit_flag:
         while ai_fleet['total'] * player_fleet['total'] != 0:
             print('Entered game loop')
             x = 0
@@ -304,7 +306,11 @@ while not quit_flag:
             battleBoard.__repr__()
             if ai_fleet['total'] == 0:
                 print('Congratulations! You won!')
-                player_win = True
+                round_quit_flag = True
                 break
-        if player_win:
+            elif player_fleet['total'] == 0:
+                print('Bad news: I won')
+                round_quit_flag = True
+                break
+        if round_quit_flag:
             break
