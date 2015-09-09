@@ -3,7 +3,6 @@ from random import randint, choice
 
 print(chr(27) + "[2J")
 
-
 fleet_dict = {1: 4,
               2: 3,
               3: 2,
@@ -26,7 +25,7 @@ class Board(object):
         for i in self.board:
             print(str(field_y).rjust(2, ' '), ' '.join(i))
             field_y -= 1
-        for xx in range(1, self.length+1):
+        for xx in range(1, self.length + 1):
             field_x += (str(xx).ljust(3, ' '))
         print(field_x)
         print('\n')
@@ -148,7 +147,7 @@ def place_ship(board, size, number, player_fleet_in):
                         board.board[rand_x][yy] = str(number)
                         dict_fill(player_fleet_in, rand_x, yy)
                 in_progress = False
-        # print('Placing result: {}, x:y [{}:{}], ship: {} \n'.format(result, rand_x, rand_y, number))
+                # print('Placing result: {}, x:y [{}:{}], ship: {} \n'.format(result, rand_x, rand_y, number))
     return result  # rand_x, rand_y, result_board.__repr__(), board.__repr__()
 
 
@@ -209,7 +208,6 @@ player_board = Board(10)
 ai_fleet = {'total': sum(fleet_dict.values())}
 player_fleet = {'total': sum(fleet_dict.values())}
 
-
 print(battleBoard.__repr__())
 # print(ai_fleet)
 
@@ -219,20 +217,29 @@ is_players_turn = True
 positive_answer = ['YES', 'YEP', 'YEAH', 'Y', '1']
 negative_answer = ['NO', 'NOPE', 'NONE', 'N', '0']
 
+ai_level = 0
+
 
 def game_invitation():
+    int_ai_level = 0
+    internal_quit_flag = False
     while True:
-        answer = 'Y'  # input('Would you like to play Battleship? (yes/no)\n').upper()
+        # answer = 'Y'
+        answer = input('Would you like to play Battleship? (yes/no)\n').upper()
         if answer in negative_answer:
             print('Well, goodbye!')
-            inner_quit_flag = True
+            internal_quit_flag = True
             break
         elif answer in positive_answer:
+            # refactor for try
+            int_ai_level = int(input('Please choose difficulty level:\n'
+                                     '1 - Normal\n'
+                                     '2 - Hardcore'))
             print('Well, let\'s begin!')
             break
         else:
             print('I don\'t understand you, let\'s try again:')
-    return inner_quit_flag
+    return internal_quit_flag, int_ai_level
 
 
 def check_shot(xx, yy):
@@ -262,23 +269,27 @@ def get_shot_coordinates():
     if is_players_turn:
         while True:
             try:
-                x = abs(board_length - int(input('Type x: ')))
-                y = int(input('Type y: '))-1
-                if (x not in range(0, board_length)) or (y not in range(0, board_length)):
+                # converting human coordinates to alien logic system
+                xx = abs(board_length - int(input('Type x: ')))
+                yy = int(input('Type y: ')) - 1
+                if (xx not in range(0, board_length)) or (yy not in range(0, board_length)):
                     raise BaseException
                 break
             except ValueError:
                 print('Please type correct coordinates')
             except BaseException:
                 print('Oops, that\'s not even in the ocean')
-        # check hit/missed
+                # check hit/missed
     else:
+        # call to ai logic
         pass
+    return xx, yy
 
 
 # game cycle
 while not quit_flag:
-    if game_invitation():
+    quit_flag, ai_level = game_invitation()
+    if quit_flag:
         break
 
     # init boards
@@ -297,11 +308,12 @@ while not quit_flag:
     while not round_quit_flag:
         while ai_fleet['total'] * player_fleet['total'] != 0:
             print('Entered game loop')
-            x = 0
-            y = 0
 
-            # check if input is correct
-            get_shot_coordinates()
+            # getting shot coordinates
+            x, y = get_shot_coordinates()
+
+            # checking result of shot and switching turn if needed
+            is_players_turn = check_shot(x, y)
 
             battleBoard.__repr__()
             if ai_fleet['total'] == 0:
