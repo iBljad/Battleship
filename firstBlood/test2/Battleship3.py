@@ -15,7 +15,7 @@ player_fleet_dict_for_ai = fleet_dict
 def assign_color(xx, yy, board_in):
     if board_in.board[xx][yy] == 'X ':
         return '\033[31m'
-    elif not point_ok_color(board_in, xx, yy) or board_in.board[xx][yy] == 'm ':
+    elif not point_ok(board_in, xx, yy, 'color') or board_in.board[xx][yy] == 'm ':
         return '\033[90m'
     elif board_in.board[xx][yy] == '~ ':
         return '\033[34m'
@@ -52,38 +52,19 @@ class Board(object):
         print('\n')
 
 
-battleBoard = Board(10)
-board_length = len(battleBoard.board)
-
-
-# check for coloring
-def point_ok_color(board, xx, yy):
-    ok = False
-    for xxx in range(max(0, xx - 1), min(len(board.board), xx + 2)):
-        for yyy in range(max(0, yy - 1), min(len(board.board), yy + 2)):
-            if board.board[xxx][yyy] == "X ":
-                ok = False
-                break
-        else:
-            ok = True
-        if not ok:
-            break
-    return ok
+player_battle_board = Board(10)
+ai_battle_board = Board(10)
+board_length = len(player_battle_board.board)
 
 
 # Checking if point is allowed to place ship
-def point_ok(board, xx, yy):
-    ok = False
+def point_ok(board, xx, yy, mode='ship'):
     for xxx in range(max(0, xx - 1), min(board_length, xx + 2)):
         for yyy in range(max(0, yy - 1), min(board_length, yy + 2)):
-            if board.board[xxx][yyy] != "~ ":
-                ok = False
-                break
-        else:
-            ok = True
-        if not ok:
-            break
-    return ok
+            if (mode == 'ship' and board.board[xxx][yyy] != "~ ") or (
+                    mode == 'color' and board.board[xxx][yyy] == "X "):
+                return False
+    return True
 
 
 def place_ship(board, size, number, player_fleet_in):
@@ -184,14 +165,14 @@ def place_ship(board, size, number, player_fleet_in):
                         dict_fill(player_fleet_in, rand_x, yy)
                 in_progress = False
                 # print('Placing result: {}, x:y [{}:{}], ship: {} \n'.format(result, rand_x, rand_y, number))
-    return result  # rand_x, rand_y, result_board.__repr__(), board.__repr__()
+    return result
 
 
 def board_init(board, fleet_dict_in, player_fleet_in):
     quit_init_flag = False
     try_cnt = 0
     while not quit_init_flag:
-        battleBoard.__init__(10)
+        player_battle_board.__init__(10)
         for size in fleet_dict_in:
             for count in range(0, fleet_dict_in[size]):
                 player_fleet_in[size * 10 + count + 1] = {}
@@ -232,10 +213,19 @@ def check_board_init(board, fleet_dict_input):
 
 
 # print X for sunken ship
-def sunk_ship(fleet_name, ship_name, board_name):
+def sunk_ship(ship_name):
+    if not is_players_turn:
+        fleet_name = player_fleet
+        board_name = player_board
+        battle_board_name = ai_battle_board
+        player_fleet_dict_for_ai[int(str(ship_name)[0])] -= 1
+    else:
+        fleet_name = ai_fleet
+        board_name = ai_board
+        battle_board_name = player_battle_board
     for xxx in fleet_name[ship_name]['coordinates']:
         board_name.board[xxx[0]][xxx[1]] = 'X '
-        player_fleet_dict_for_ai[int(str(ship_name)[0])] -= 1
+        battle_board_name.board[xxx[0]][xxx[1]] = 'X '
 
 
 ai_board = Board(10)
@@ -244,16 +234,11 @@ player_board = Board(10)
 ai_fleet = {'total': sum(fleet_dict.values())}
 player_fleet = {'total': sum(fleet_dict.values())}
 
-print(battleBoard.__repr__())
-# print(ai_fleet)
-
 quit_flag = False
 is_players_turn = True
 
 positive_answer = ['YES', 'YEP', 'YEAH', 'Y', '1']
 negative_answer = ['NO', 'NOPE', 'NONE', 'N', '0']
-
-ai_level = 0
 
 
 def game_invitation():
@@ -270,7 +255,7 @@ def game_invitation():
             # refactor for try
             int_ai_level = int(input('Please choose difficulty level:\n'
                                      '1 - Normal\n'
-                                     '2 - Hardcore'))
+                                     '2 - Hardcore\n'))
             print('Well, let\'s begin!')
             break
         else:
@@ -279,26 +264,41 @@ def game_invitation():
 
 
 def check_shot(xx, yy):
+    print(xx, yy)
+
+    turn = is_players_turn
+    
     if is_players_turn:
-        if ai_board.board[xx][yy] not in str(ai_fleet.keys().__str__()):
-            if ai_board.board[xx][yy] in ['* ', 'm ', 'xx ']:
-                print('Don\'t repeat')
-            else:
-                ai_board.board[xx][yy] = 'm '
-                battleBoard.board[xx][yy] = 'm '
-                print('You missed')
+        board_name = ai_board
+        battle_board_name = player_battle_board
+    else:
+        board_name = player_board
+        battle_board_name = ai_battle_board
+
+    if board_name.board[xx][yy] not in str(ai_fleet.keys().__str__()):
+        if board_name.board[xx][yy] in ['* ', 'm ', 'xx ']:
+            print('Don\'t repeat')
+            result = 'R'
         else:
-            ai_fleet[int(ai_board.board[xx][yy])]['size'] -= 1
-            if ai_fleet[int(ai_board.board[xx][yy])]['size'] == 0:
-                ai_fleet['total'] -= 1
-                print('Oh no! you sank myy ship!')
-                sunk_ship(ai_fleet, int(ai_board.board[xx][yy]), battleBoard)
-                ai_board.board[xx][yy] = 'xx '
-                # battleBoard.board[xx][yy] = 'xx '
-            else:
-                print('You\'ve got me')
-                ai_board.board[xx][yy] = '* '
-                battleBoard.board[xx][yy] = '* '
+            board_name.board[xx][yy] = 'm '
+            battle_board_name.board[xx][yy] = 'm '
+            result = 'M'
+            turn =  turn ^ True
+            print('You missed')
+    else:
+        ai_fleet[int(board_name.board[xx][yy])]['size'] -= 1
+        if ai_fleet[int(board_name.board[xx][yy])]['size'] == 0:
+            ai_fleet['total'] -= 1
+            print('Oh no! you sank my ship!')
+            result = 'S'
+            sunk_ship(int(board_name.board[xx][yy]))
+        else:
+            print('You\'ve got me')
+            result = 'H'
+            board_name.board[xx][yy] = '* '
+            battle_board_name.board[xx][yy] = '* '
+    print(turn, result)
+    return turn, result
 
 
 def get_shot_coordinates():
@@ -306,20 +306,19 @@ def get_shot_coordinates():
         while True:
             try:
                 # converting human coordinates to alien logic system
-                xx = abs(board_length - int(input('Type x: ')))
-                yy = int(input('Type y: ')) - 1
+                xx = int(input('Type x: ')) - 1
+                yy = abs(len(player_battle_board.board) - int(input('Type y: ')))
                 if (xx not in range(0, board_length)) or (yy not in range(0, board_length)):
                     raise BaseException
-                break
+                return xx, yy
             except ValueError:
                 print('Please type correct coordinates')
             except BaseException:
                 print('Oops, that\'s not even in the ocean')
-                # check hit/missed
     else:
         # call to ai logic
+        print('Calling AI logic...')
         pass
-    return xx, yy
 
 
 # game cycle
@@ -337,21 +336,21 @@ while not quit_flag:
     # debug only
     print(ai_board.__repr__())
     pprint(ai_fleet, width=95)
-    print(battleBoard.__repr__())
+    print(player_battle_board.__repr__())
     print(player_fleet)
     round_quit_flag = False
 
     while not round_quit_flag:
         while ai_fleet['total'] * player_fleet['total'] != 0:
-            print('Entered game loop')
+            print('Entered round loop')
 
             # getting shot coordinates
-            x, y = get_shot_coordinates()
+            y, x = get_shot_coordinates()
 
             # checking result of shot and switching turn if needed
-            is_players_turn = check_shot(x, y)
+            is_players_turn, shot_result = check_shot(x, y)
 
-            battleBoard.__repr__()
+            player_battle_board.__repr__()
             if ai_fleet['total'] == 0:
                 print('Congratulations! You won!')
                 round_quit_flag = True
