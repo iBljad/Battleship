@@ -1,5 +1,10 @@
 from pprint import pprint
-from random import randint, choice
+from random import randint, choice, seed
+from time import sleep
+from logging import basicConfig, debug, info, warning, error, critical
+
+basicConfig(level='DEBUG', format='%(asctime)s - %(levelname)s - %(message)s', datefmt='%H:%M:%S')
+debug('This is a test log message.')
 
 print(chr(27) + "[2J")
 
@@ -62,7 +67,7 @@ def point_ok(board, xx, yy, mode='ship'):
     for xxx in range(max(0, xx - 1), min(board_length, xx + 2)):
         for yyy in range(max(0, yy - 1), min(board_length, yy + 2)):
             if (mode == 'ship' and board.board[xxx][yyy] != "~ ") or (
-                    mode == 'color' and board.board[xxx][yyy] == "X "):
+                            mode == 'color' and board.board[xxx][yyy] == "X "):
                 return False
     return True
 
@@ -119,7 +124,7 @@ def place_ship(board, size, number, player_fleet_in):
             elif point_hor_ok(init_board, yy, xx, size):
                 result_board.board[xx][yy] = 'h'
             else:
-                result_board.board[xx][yy] = 'xx'
+                result_board.board[xx][yy] = 'X'
 
     # check if there free cell in board
     for xx in range(board_length):
@@ -264,31 +269,34 @@ def game_invitation():
 
 
 def check_shot(xx, yy):
-    print(xx, yy)
-
     turn = is_players_turn
-    
+
     if is_players_turn:
         board_name = ai_board
         battle_board_name = player_battle_board
+        battle_board_name_ind = 'player_battle_board'
+        fleet_name = ai_fleet
     else:
         board_name = player_board
         battle_board_name = ai_battle_board
+        battle_board_name_ind = 'ai_battle_board'
+        fleet_name = player_fleet
 
-    if board_name.board[xx][yy] not in str(ai_fleet.keys().__str__()):
-        if board_name.board[xx][yy] in ['* ', 'm ', 'xx ']:
+    if board_name.board[xx][yy] not in str(fleet_name.keys().__str__()):
+        if battle_board_name.board[xx][yy] in ['* ', 'm ', 'X ']:
+            print(battle_board_name_ind, xx, yy,  battle_board_name.board[xx][yy])
             print('Don\'t repeat')
             result = 'R'
         else:
             board_name.board[xx][yy] = 'm '
             battle_board_name.board[xx][yy] = 'm '
             result = 'M'
-            turn =  turn ^ True
+            turn ^= True
             print('You missed')
     else:
-        ai_fleet[int(board_name.board[xx][yy])]['size'] -= 1
-        if ai_fleet[int(board_name.board[xx][yy])]['size'] == 0:
-            ai_fleet['total'] -= 1
+        fleet_name[int(board_name.board[xx][yy])]['size'] -= 1
+        if fleet_name[int(board_name.board[xx][yy])]['size'] == 0:
+            fleet_name['total'] -= 1
             print('Oh no! you sank my ship!')
             result = 'S'
             sunk_ship(int(board_name.board[xx][yy]))
@@ -297,28 +305,54 @@ def check_shot(xx, yy):
             result = 'H'
             board_name.board[xx][yy] = '* '
             battle_board_name.board[xx][yy] = '* '
-    print(turn, result)
-    return turn, result
+    if is_players_turn:
+        return turn, ''
+    else:
+        return turn, result
 
 
 def get_shot_coordinates():
+    xx, yy = ai_shot()
+    # if is_players_turn:
+    #     while True:
+    #         try:
+    #             # converting human coordinates to alien logic system
+    #             yy = int(input('Type x: ')) - 1
+    #             xx = abs(len(player_battle_board.board) - int(input('Type y: ')))
+    #             if (xx not in range(0, board_length)) or (yy not in range(0, board_length)):
+    #                 raise BaseException
+    #             return xx, yy
+    #         except ValueError:
+    #             print('Please type correct coordinates')
+    #         except BaseException:
+    #             print('Oops, that\'s not even in the ocean')
+    # else:
+    #     # call to ai logic
+    #     print('Calling AI logic...')
+    #     xx, yy = ai_shot()
+    #     pass
+    return xx, yy
+
+
+def ai_shot():
+    # debug('ai level = %d' % ai_level)
+    # sleep(0.1)
     if is_players_turn:
-        while True:
-            try:
-                # converting human coordinates to alien logic system
-                xx = int(input('Type x: ')) - 1
-                yy = abs(len(player_battle_board.board) - int(input('Type y: ')))
-                if (xx not in range(0, board_length)) or (yy not in range(0, board_length)):
-                    raise BaseException
-                return xx, yy
-            except ValueError:
-                print('Please type correct coordinates')
-            except BaseException:
-                print('Oops, that\'s not even in the ocean')
+        board_name = player_battle_board
+        board_name_ind = 'player_battle_board'
     else:
-        # call to ai logic
-        print('Calling AI logic...')
-        pass
+        board_name = ai_battle_board
+        board_name_ind = 'ai_battle_board'
+    if ai_level == 1:
+        while True:
+            xx = randint(0, board_length - 1)
+            yy = randint(0, board_length - 1)
+            if board_name.board[xx][yy] not in ['* ', 'm ', 'X ']:
+                sleep(0.001)
+                debug('Players turn: %s, xx: %d, y: %d. XX, YY = %s, board: %s' % (
+                    str(is_players_turn), xx, yy, board_name.board[xx][yy], board_name_ind))
+                sleep(0.001)
+                return xx, yy
 
 
 # game cycle
@@ -334,23 +368,31 @@ while not quit_flag:
     board_init(player_board, fleet_dict, player_fleet)
 
     # debug only
-    print(ai_board.__repr__())
-    pprint(ai_fleet, width=95)
+    debug('ai_board')
+    print(ai_battle_board.__repr__(), '\n\n\n')
+    # pprint(ai_fleet, width=95)
+    debug('player_board')
     print(player_battle_board.__repr__())
     print(player_fleet)
     round_quit_flag = False
 
     while not round_quit_flag:
+        turns_cnt = 0
         while ai_fleet['total'] * player_fleet['total'] != 0:
             print('Entered round loop')
 
             # getting shot coordinates
-            y, x = get_shot_coordinates()
+            x, y = get_shot_coordinates()
 
             # checking result of shot and switching turn if needed
             is_players_turn, shot_result = check_shot(x, y)
 
+            debug('AI total = %d, Player total = %d' % (ai_fleet['total'], player_fleet['total']))
+
             player_battle_board.__repr__()
+            ai_battle_board.__repr__()
+            turns_cnt += 1
+            debug('Num of turns: %d' % turns_cnt)
             if ai_fleet['total'] == 0:
                 print('Congratulations! You won!')
                 round_quit_flag = True
